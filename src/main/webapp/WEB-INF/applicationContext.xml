@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+		<!-- 加载配置文件 -->
+		<context:property-placeholder location="classpath:*.properties" />
+		
+		
+		<!-- 自动扫描组件 -->
+		<context:component-scan base-package="net.xinqushi.service.*,net.xinqushi.dao.*"/>
+		
+		
+		<!-- 数据库连接池 -->
+		<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+			destroy-method="close">
+			<property name="url" value="${db.url}" />
+			<property name="username" value="${db.username}" />
+			<property name="password" value="${db.password}" />
+			<property name="driverClassName" value="${db.driver}" />
+			<property name="maxActive" value="10" />
+			<property name="minIdle" value="5" />
+		</bean>
+		
+		
+		<!-- 让spring管理sqlsessionfactory 使用mybatis和spring整合包中的 工厂类-->
+		<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+			<!-- 数据库连接池 -->
+			<property name="dataSource" ref="dataSource" />
+			<!-- 加载mybatis的全局配置文件 -->
+			<property name="configLocation" value="classpath:SqlMapConfig.xml" />
+		</bean>
+		
+		
+		<!-- 配置扫描包，加载mapper代理对象 -->
+		<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+			<property name="basePackage" value="net.xinqushi.mapper" />
+		</bean>	 
+		
+		
+		 <!-- 配置事务管理器 -->
+		<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+			<property name="dataSource" ref="dataSource"/>
+		</bean> 		
+		
+		
+		<!-- 配置切面类、定义切入点 -->
+		<aop:config>
+		    <aop:pointcut expression="execution(* net.xinqushi.dao..*.*(..))" id="txPointCut"/>
+		    <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut"/>
+		</aop:config>
+		  
+		  
+		<!-- 声明式事务 -->
+		<tx:advice id="txAdvice" transaction-manager="transactionManager">            
+		    <tx:attributes>
+		         <tx:method name="insert*" propagation="REQUIRED" />
+		         <tx:method name="add*" propagation="REQUIRED" />
+		         <tx:method name="save*" propagation="REQUIRED" />
+		         <tx:method name="del*" propagation="REQUIRED" />
+		         <tx:method name="update*" propagation="REQUIRED" />
+		         <tx:method name="select*" propagation="REQUIRED" read-only="true"/>
+		         <tx:method name="check*" propagation="REQUIRED" read-only="true"/>
+		         <tx:method name="isvalid*" propagation="REQUIRED" read-only="true"/>
+		    </tx:attributes>        
+		</tx:advice>	
+		
+				
+</beans>
